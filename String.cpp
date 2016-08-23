@@ -5,6 +5,165 @@
 
 using namespace std;
 
+//Ð´Ê±¿½±´1
+//class MyString1
+//{
+//	friend ostream&operator<<(ostream& os, MyString1& str);
+//
+//public:
+//	MyString1(char* str = "")
+//		:_str(new char[strlen(str) + 1])
+//		, _pCount(new int(1))
+//	{
+//		strcpy(_str, str);
+//	}
+//
+//	MyString1(const MyString1& s)
+//		:_str(s._str)
+//		, _pCount(s._pCount)
+//	{
+//		++(*_pCount);
+//	}
+//
+//	MyString1& operator=(MyString1& str)
+//	{
+//		if (this != &str)
+//		{
+//			if (--(*_pCount) == 0)
+//			{
+//				delete[] _str;
+//			}
+//
+//			_str = str._str;
+//			_pCount = str._pCount;
+//			++(*_pCount);
+//		}
+//		return *this;
+//	}
+//
+//	~MyString1()
+//	{
+//		if (--(*_pCount) == 0)
+//		{
+//			delete[] _str;
+//			delete[] _pCount;
+//		}
+//	}
+//
+//private:
+//	char* _str;
+//	int* _pCount;
+//};
+//ostream&operator<<(ostream& os, MyString1& str)
+//{
+//	os << str._str;
+//	return os;
+//}
+//
+//void Test6()
+//{
+//	MyString1 s1("abcdefg");
+//	MyString1 s2(s1);
+//	MyString1 s3("hello");
+//	s3 = s1;
+//	cout << s1 << endl;
+//	cout << s2 << endl;
+//	cout << s3 << endl;
+//
+//}
+
+//Ð´Ê±¿½±´2
+class MyString2
+{
+	friend ostream&operator<<(ostream& os, MyString2& str);
+
+public:
+	MyString2(char* str = "")
+		:_str(new char[strlen(str) + 1+4])
+	{
+		_str = _str + 4;
+		strcpy(_str, str);
+		_GetCount() = 1;
+	}
+
+	MyString2(const MyString2& s)
+		:_str(s._str)
+	{
+		++_GetCount();
+	}
+
+	MyString2& operator=(MyString2& str)
+	{
+		if (this != &str)
+		{
+			if (--_GetCount() == 0)
+			{
+				delete[] (_str-4);
+				_str = NULL;
+			}
+			
+			_str = str._str;
+			++_GetCount();
+		}
+		return *this;
+	}
+
+	~MyString2()
+	{
+		if (--_GetCount()==0)
+		{
+			delete[] (_str-4);
+		}
+	}
+
+	int& _GetCount()
+	{
+		return *((int*)_str - 1);
+	}
+
+	char operator[](int index)
+	{
+		if (_GetCount() == 1)
+		{
+			return _str[index];
+		}
+		else
+		{
+			--_GetCount();
+			char* tmp = new char[strlen(_str) + 5];
+
+			strcpy(tmp+4, _str);
+			_str = tmp + 4;
+			_GetCount() = 1;
+			return _str[index];
+		}
+	}
+private:
+	char* _str;
+};
+ostream&operator<<(ostream& os, MyString2& str)
+{
+	os << str._str;
+	return os;
+}
+
+void Test7()
+{
+	MyString2 s1("abcdefg");
+	MyString2 s2(s1);
+	MyString2 s3("hello");
+	s3 = s1;
+	char s = s3[3];
+	cout << s << endl;
+	cout << s1 << endl;
+	cout << s2 << endl;
+	cout << s3 << endl;
+
+
+}
+
+
+
 //ÉîÇ³¿½±´
 class String
 {
@@ -306,7 +465,8 @@ void Test3()
 }
 int main()
 {
-	Test3();
+	//Test3();
+	Test7();
 	system("pause");
 	return 0;
 }

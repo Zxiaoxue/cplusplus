@@ -1,11 +1,12 @@
-#define _CRT_SECURE_NOWARNINGS 1
+#pragma once
+
 #include <iostream>
-#include "List.h"
+#include "Vector.h"
 using namespace std;
 
 int main()
 {
-	TestList();
+	TestVector();
 	system("pause");
 	return 0;
 }

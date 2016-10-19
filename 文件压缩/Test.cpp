@@ -6,7 +6,8 @@ using namespace std;
 
 int main()
 {
-	Test();
+	TestCompress();
+	TestUnCompress();
 	system("pause");
 	return 0;
 }

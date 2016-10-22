@@ -5,6 +5,7 @@
 #include <string>
 #include <cassert>
 #include <algorithm>
+#include <string>
 
 typedef long long LongType;
 
@@ -46,6 +47,10 @@ struct CharInfo
 	{
 		return _count++;
 	}
+	CharInfo operator--()
+	{
+		return _count--;
+	}
 };
 
 
@@ -69,38 +74,33 @@ public:
 		//5.解压缩
 
 		//1.统计字符出现的次数
-		FILE* fOut = fopen(filename,"r");
+		FILE* fOut = fopen(filename,"rb");
 		assert(fOut);
 
-		char ch = fgetc(fOut);
+		//处理中文字符，用unsigned char 
+		unsigned char ch = fgetc(fOut);
 
-		while(ch != EOF)
+		while(!feof(fOut))
 		{
 			++(_infos[ch]._count);
 			ch = fgetc(fOut);
 		}
 
 		//2.构建Huffman树
-		HuffmanTree<CharInfo> hp(_infos,256);
+		HuffmanTree<CharInfo> hp(_infos,256,invalid);
 
 		//3.生成Huffman编码
 		HuffmanTreeNode<CharInfo>* root = hp.GetRoot();
 		string code = "";
 		_GenerateHuffman(root,code);
 
-		//逆置
-		/*for(int i = 0; i<256; ++i)
-		{
-			if(_infos[i] != invalid)
-				reverse(_infos[i]._code.begin(),_infos[i]._code.end());
-		}*/
 
 		//4.压缩
 		string name = filename;
 
 		string compressfilename = name + ".compress";
 
-		FILE* fIn = fopen(compressfilename.c_str(),"w");
+		FILE* fIn = fopen(compressfilename.c_str(),"wb");
 		assert(fIn);
 
 		//回跳函数
@@ -110,7 +110,7 @@ public:
 		char pos = 0;
 		int num = 0;
 	
-		while(ch != EOF)
+		while(!feof(fOut))
 		{
 			int size = _infos[ch]._code.size();
 
@@ -122,7 +122,7 @@ public:
 
 				++num;
 
-				if(num == 8)
+				if(num == 8) 
 				{
 					fputc(pos,fIn);
 					pos = 0;
@@ -141,7 +141,7 @@ public:
 		}
 
 		string configurename = name + ".configure";
-		FILE* fConfigure = fopen(configurename.c_str(),"w");
+		FILE* fConfigure = fopen(configurename.c_str(),"wb");
 		string line;
 		char buffer[128];
 
@@ -173,32 +173,57 @@ public:
 		name = name.substr(0,index);
 
 		string configurename = name + ".configure";
-		FILE* fConfigure = fopen(configurename.c_str(),"r");
+		FILE* fConfigure = fopen(configurename.c_str(),"rb");
 		assert(fConfigure);
 
 		string uncompressfile = name + ".uncompress";
-		FILE* fIn = fopen(uncompressfile.c_str(),"w");
+		FILE* fIn = fopen(uncompressfile.c_str(),"wb");
 		assert(fIn);
 
-		ReadLine(configurename.c_str());
-
-		//构建Huffman树
-		HuffmanTree<CharInfo> hp(_infos,256);
-
+		string line;
 		
-		int pos = 7;
+		//读取配置文件
+		while(ReadLine(fConfigure,line))
+		{
+			if(line.empty())
+			{
+				line += '\n';
+				//ReadLine(fConfigure,line);
+			}
+			else
+			{
+				//处理中文字符
+				/*if(line.size() < 2)
+					ReadLine(fConfigure,line);*/
+
+				string sub = line.substr(2,line.size()-2);
+				_infos[(unsigned char)line[0]]._count = atoi(sub.c_str());
+
+				line.clear();
+			}
+			
+		}
+		//构建huffman树
+		HuffmanTree<CharInfo> hp(_infos,256);
 
 		HuffmanTreeNode<CharInfo>* root = hp.GetRoot();
 		HuffmanTreeNode<CharInfo>* cur = root;
 
-		FILE* fOut = fopen(filename,"r");
-		char ch = fgetc(fOut);
+		FILE* fOut = fopen(filename,"rb");
+		assert(fOut);
+	
+		//unsigned char 处理中文字符
+		unsigned char ch = fgetc(fOut);
 		//HuffmanTreeNode<CharInfo>* charcount(0);
 	
-		CharInfo chcount;
-		while(ch != EOF)
+		CharInfo chcount = hp.GetRoot()->_weight;
+
+		//读取压缩文件，解压缩出原文件	
+
+		int pos = 7;
+		while(!feof(fOut))
 		{
-			if(chcount == root->_weight)
+			if(chcount == 0)
 				break;
 			if(cur == NULL)
 				break;
@@ -212,69 +237,60 @@ public:
 			
 			--pos;
 
-			
-
 			//找到叶子节点则输出
 			if(cur->_left == NULL && cur->_right == NULL)
 			{
 				fputc(cur->_weight._ch,fIn);
-				++chcount;
+				--_infos[cur->_weight._ch]._count;
+				--chcount;
 				cur = root;
-				
 			}
 			
 			if(pos < 0)
 			{
 				ch = fgetc(fOut);
 				pos = 7;
-				cur = root;
 			}
 		}
 
 		fclose(fIn);
 		fclose(fOut);
-			
+	
 		return uncompressfile;
-
 	}
 protected:
-
 	//生成Huffman编码
 	void _GenerateHuffman(HuffmanTreeNode<CharInfo>* root, string& code)
 	{
-			if(root == NULL)
+		if(root == NULL)
 				return;
 
 		if(root->_left == NULL && root->_right == NULL)
 		{
-			_infos[root->_weight._ch]._code = code;
-			//return;
+			_infos[(unsigned char)root->_weight._ch]._code = code;
+			return;
 		}
-
-		_GenerateHuffman(root->_left, code+'0');
-		_GenerateHuffman(root->_right, code+'1');
+		if(root->_left)
+			_GenerateHuffman(root->_left, code+'0');
+		if(root->_right)
+			_GenerateHuffman(root->_right, code+'1');
 
 	}
 
-	void ReadLine(const char* configurename)
+	bool ReadLine(FILE*& fConfigure,string& str)
 	{
-		FILE* fConfigure = fopen(configurename,"r");
 		assert(fConfigure);
 
-		string line;
+		int ch = fgetc(fConfigure);
+		if(ch == EOF)
+			return false;
 
-		while(!feof(fConfigure))
+		while(ch != '\n' && ch != EOF)
 		{
-			char buffer[128];
-			fgets(buffer,128,fConfigure);
-			string line(buffer);
-			string sub = line.substr(2,line.size());
-			_infos[line[0]]._count = atoi(sub.c_str());
-			line.clear();
+			str += ch;
+			ch = fgetc(fConfigure);
 		}
-	
-		fclose(fConfigure);
-
+		return true;
 	}
 protected:
 	CharInfo _infos[256];
@@ -286,9 +302,11 @@ void TestCompress()
 	fn.CompressFile("Huffman.txt");
 	cout<<"压缩"<<endl;
 }
+
 void TestUnCompress()
 {
 	Filecompress fn;
+
 	fn.UnCompressFile("Huffman.txt.compress");
 	cout<<"解压缩"<<endl;
 }

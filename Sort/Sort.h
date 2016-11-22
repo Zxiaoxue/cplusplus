@@ -257,31 +257,178 @@ void TestBubbleSort()
 	PrintArr(a,size);
 }
 
-//int PartSort(int* a,int begin, int end,int key)
-//{
-//	int left = begin;
-//	int right = end-1;
-//
-//	while(left <= right)
-//	{
-//		while(a[left] <= key)
-//		{
-//			++left;
-//		}
-//		while(a[right] >= key)
-//		{
-//			--right;
-//		}
-//
-//		swap(a[left],a[right]);
-//	}
-//
-//
-//}
-//
-//void QuickSort(int* a,int size)
-//{
-//	assert(a);
-//
-//
-//}
+//快排---左右指针法
+int PartSort1(int* a,int begin, int end)
+{
+	int left = begin;
+	int right = end-1;
+	//可采用三数取中法
+
+	int key = a[end];
+
+	while(left < right)
+	{
+		while(left<right && a[left] <= key)
+		{
+			++left;
+		}
+		while(left<right && a[right] >= key)
+		{
+			--right;
+		}
+
+		if(left < right)
+			swap(a[left],a[right]);
+
+		//处理两个数的情况
+		if(a[left] < a[end])
+			swap(a[left],a[end]);
+	}
+
+	swap(a[left],a[end]);
+
+	return left;
+}
+
+//快排---挖坑法
+int PartSort2(int*a,int begin,int end)
+{
+	assert(a);
+
+	int left = begin;
+	int right = end;
+	//可采用三数取中法优化
+	int key = a[end];
+
+	while(left < right)
+	{
+		//从左往右找比key大的放到right位置上
+		while(left < right && a[left] <= key)
+		{
+			++left;
+		}
+
+		if(left < right)
+			a[right] = a[left];
+
+		//从右往左找比key小的放到新的坑上
+		while(left < right && a[right] >= key)
+		{
+			--right;
+		}
+
+		if(left < right)
+			a[left] = a[right];
+	}
+	
+	a[left] = key;
+
+	return left;
+}
+
+//快排---前后指针法
+int PartSort3(int* a,int begin,int end)
+{
+	assert(a);
+
+	int prev = begin-1;
+	int cur = begin;
+	int key = a[end];
+
+	if(begin < end)
+	{
+		while(cur < end)
+		{
+			if(a[cur] < key && ++prev!=cur)
+			{
+				swap(a[prev],a[cur]);
+			}
+
+			++cur;
+		}
+
+		swap(a[++prev],a[end]);
+		return prev;
+	}
+	return -1;
+}
+
+#include <stack>
+void QuickSortR(int* a,int begin,int end)
+{
+	if(begin < end)
+	{
+		stack<int> s;
+
+		s.push(end);
+		s.push(begin);
+
+		while(!s.empty())
+		{
+			int left = s.top();
+			s.pop();
+			int right = s.top();
+			s.pop();
+
+			int div = PartSort3(a,left,right);
+
+			if(left < div-1)
+			{
+				s.push(div-1);
+				s.push(left);
+			}
+			if(right > div+1)
+			{
+				s.push(right);
+				s.push(div+1);
+			}
+		}
+	}
+	
+}
+
+void QuickSort(int* a,int begin,int end)
+{
+	assert(a);
+
+	if(begin >= end)
+		return;
+
+	//int div = PartSort1(a,begin,end);
+	int div = PartSort2(a,begin,end);
+
+	//QuickSort(a,begin,div-1);---PartSort2;
+	QuickSort(a,begin,div-1);
+	QuickSort(a,div+1,end);
+
+}
+
+void TestQuickSort()
+{
+	//int a[] = {2,5,4,9,3,6,8,7,1,0};
+	int a[] = {2,0,4,9,3,6,8,7,1,5};
+	int size = sizeof(a)/sizeof(a[0]);
+
+	QuickSort(a,0,size-1);
+	PrintArr(a,size);
+}
+
+void TestQuickSortR()
+{
+	//int a[] = {2,5,4,9,3,6,8,7,1,0};
+	int a[] = {2,0,4,9,3,6,8,7,1,5};
+	int size = sizeof(a)/sizeof(a[0]);
+
+	QuickSortR(a,0,size-1);
+	PrintArr(a,size);
+}
+
+
+void Merage(int* a,int begin,int end)
+{
+	assert(a);
+
+}
+
+void TestMerageSort()
+{}

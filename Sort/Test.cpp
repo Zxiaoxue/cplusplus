@@ -9,7 +9,9 @@ int main()
 	//TestSelectSortOP();	
 	//TestSelectSort();
 	//TestHeapSort();
-	TestBubbleSort();
+	//TestBubbleSort();
+	//TestQuickSort();
+	TestQuickSortR();
 	system("pause");
 	return 0;
 }

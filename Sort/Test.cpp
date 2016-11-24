@@ -11,7 +11,10 @@ int main()
 	//TestHeapSort();
 	//TestBubbleSort();
 	//TestQuickSort();
-	TestQuickSortR();
+	//TestQuickSortR();
+	//TestMerageSort();
+	//TestCountSort();
+	TestLSDSort();
 	system("pause");
 	return 0;
 }

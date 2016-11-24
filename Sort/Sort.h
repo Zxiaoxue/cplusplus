@@ -423,12 +423,167 @@ void TestQuickSortR()
 	PrintArr(a,size);
 }
 
+void _merageArray(int* a,int begin,int mid,int end,int* tmp)
+{
+	int left = begin;
+	int right = end;
+	int j = mid+1;
+	int k = mid;
+	int m = left;
 
-void Merage(int* a,int begin,int end)
+	//合并两个有序序列
+	while(left <= k && j <= right)
+	{
+		if(a[left] < a[j])
+			tmp[m++] = a[left++];
+		else
+			tmp[m++] = a[j++];
+	}
+
+	while(left <= k)
+		tmp[m++] = a[left++];
+
+	while(j <= right)
+		tmp[m++] = a[j++];
+
+	//再将tmp里的值赋给a
+	for(int i = begin; i<=end;++i)
+	{
+		a[i] = tmp[i];
+	}
+}
+
+//将两个有序序列合并
+void _meragesort(int* a,int begin,int end,int* tmp)
 {
 	assert(a);
 
+	if(begin < end)
+	{
+		int mid = (begin+end)/2;//防止溢出
+
+		_meragesort(a,begin,mid,tmp);
+		_meragesort(a,mid+1,end,tmp);
+
+		_merageArray(a,begin,mid,end,tmp);
+	}
+
+}
+
+void MerageSort(int* a,int begin,int end)
+{
+	assert(a);
+	if(a == NULL)
+		return;
+	int size = end-begin;
+
+	int* tmp = new int[size];
+	_meragesort(a,begin,end,tmp);
+
+	//delete[] tmp;放开会崩溃
 }
 
 void TestMerageSort()
-{}
+{
+	//int a[] = {2,5,4,9,3,6,8,7,1,0};
+	int a[] = {2,0,4,9,3,6,8,7,1,5};
+	int size = sizeof(a)/sizeof(a[0]);
+
+	MerageSort(a,0,size-1);
+	PrintArr(a,size);
+}
+
+//用hash表统计每个数出现的次数
+void CountSort(int* a,int size)
+{
+	assert(a);
+	int max = a[0];
+	int min = a[0];
+	for(int i = 0; i<size; ++i)
+	{
+		if(a[i]>max)
+		{
+			max = a[i];
+		}
+		
+		if(a[i]<min)
+		{
+			min = a[i];
+		}
+	}
+	int range = max-min+1;
+
+	//统计每个数据出现的次数
+	int* count = new int[range];
+	memset(count,0,sizeof(int)*size);
+	int index = 0;
+	for(int i = 0; i<range;++i)
+	{
+		count[a[index++]]++;
+	}
+	 
+	for(int i = 0; i<size; ++i)
+	{
+		while(count[i]--)
+		{
+			a[i++] = i+min;
+		}
+	}
+
+	//delete count;
+}
+
+void TestCountSort()
+{
+	//int a[] = {2,5,4,9,3,6,8,7,1,0};
+	int a[] = {2,0,4,9,3,6,8,7,1,5};
+	int size = sizeof(a)/sizeof(a[0]);
+
+	CountSort(a,size);
+	PrintArr(a,size);
+}
+
+int _GetMaxDigit(int* a,int size)
+{
+	assert(a);
+	int base = 10;
+	int digit = 1;
+
+	for(int i = 0; i<size; ++i)
+	{
+		while(a[i] >= base)
+		{
+			digit++;
+			base *= 10;
+		}
+	}
+	return digit;
+}
+
+//基数排序
+void LSDSort(int* a,int size)
+{
+	assert(a);
+	int* count = new int[size];
+	memset(count,0,sizeof(int)*size);
+	int num = 0;
+	int index = 0;
+
+	//统计每个桶中数据个数
+	for(int i = 0; i<size; ++i)
+	{
+		num = a[i]%10;
+		count[num]++;
+	}
+}
+
+void TestLSDSort()
+{
+	//int a[] = {2,5,4,9,3,6,8,7,1,0};
+	int a[] = {2,0,4,92,3,6,8,711,1,5};
+	int size = sizeof(a)/sizeof(a[0]);
+
+	LSDSort(a,size);
+	//cout<<"最大位数："<<_GetMaxDigit(a,size)<<endl;
+	PrintArr(a,size);
+}

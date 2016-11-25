@@ -151,26 +151,6 @@ typedef struct Pcb
 
 };
 
-void Sort(vector<Pcb> f,int amount)
-{
-	int l,k;
-	for(int i=0;i<amount;i++) //按进程到达时间的先后排序
-	{                               //如果两个进程同时到达，按在屏幕先输入的先运行
-		for(int j=0;j<amount-i-1;j++)
-		{ 
-			if(f[j]._atime>f[j+1]._atime)
-			{
-				l=f[j]._atime;
-				f[j]._atime=f[j+1]._atime;
-				f[j+1]._atime=l;
-
-				k=f[j]._name;
-				f[j]._name=f[j+1]._name;
-				f[j+1]._name=k;
-			}
-		}
-	}
-}
 
 class JobScheduling
 {
@@ -191,7 +171,7 @@ public:
 
 		}
 
-		Sort(_f,amount);
+		Sort(amount);
 		for(i = 0; i<amount; ++i)	//修改进程的开始执行时间,周转时间，带权周转时间
 		{
 			if(i == 0)
@@ -233,13 +213,16 @@ public:
 	{
 		while(!_f.empty())
 		{
-			for(int i = 0; i<_f.size();++i)
+			int i = _f.size();
+
+			while(i--)
 			{	
-				_f[i]._statue = RUNING;
+				_f[0]._statue = RUNING;
 				Print();
 				_f.erase(_f.begin());
 			}
 		}
+
 	}
 
 	void RoundRobin(int slot)//时间片轮转
@@ -251,6 +234,7 @@ public:
 			if(_f[i]._runtime == slot)
 			{
 				_f.erase(_f.begin());
+				i -= 1;
 			}
 			else if(_f[i]._runtime > slot)
 			{
@@ -259,6 +243,7 @@ public:
 				tmp._statue = BLOCK;
 				_f.erase(_f.begin());
 				_f.push_back(tmp);
+				i-=1;
 			}
 			else
 			{
@@ -267,6 +252,161 @@ public:
 			}
 		}
 	}
+
+	//短作业优先(short job first)
+	void SJF()
+	{
+		SortSJF();
+		while(!_f.empty())
+		{
+			int i = _f.size();
+
+			while(i--)
+			{	
+				_f[0]._statue = RUNING;
+				Print();
+				_f.erase(_f.begin());
+			}
+		}
+
+	}
+	void SortSJF()
+	{
+		int size = _f.size();
+		for(int i = 0; i<size; ++i)
+		{
+			for(int j = 1; j<size-i-1; ++j)
+			{
+				if(_f[j]._atime <= _f[i]._finish
+					&& _f[j+1]._atime <= _f[i]._finish
+					&& _f[j+1]._runtime < _f[j]._runtime)
+				{
+					//Swap(_f[j],_f[j+1]);
+					int atime =_f[j]._atime;
+					_f[j]._atime=_f[j+1]._atime;
+					_f[j+1]._atime=atime;
+
+					int name=_f[j]._name;
+					_f[j]._name=_f[j+1]._name;
+					_f[j+1]._name=name;
+
+					int runtime =_f[j]._runtime;
+					_f[j]._runtime = _f[j+1]._runtime;
+					_f[j+1]._runtime = runtime;
+
+					int start = _f[j]._start;
+					_f[j]._start = _f[j+1]._start;
+					_f[j+1]._start = start;
+
+					int finish = _f[j]._finish;
+					_f[j]._finish = _f[j+1]._finish;
+					_f[j+1]._finish = finish;
+
+					Statue statue = _f[j]._statue;
+					_f[j]._statue = _f[j+1]._statue;
+					_f[j+1]._statue = statue;
+
+					int cycling = _f[j]._cycling;
+					_f[j]._cycling = _f[j+1]._cycling;
+					_f[j+1]._cycling = cycling;
+
+					int wi = _f[j]._wi;
+					_f[j]._wi = _f[j+1]._wi;
+					_f[j+1]._wi = wi;
+				}
+			}
+		}
+	}
+
+	void Swap(Pcb pcb1,Pcb pcb2)
+	{
+		/*int atime = pcb1._atime;
+		pcb1._atime = pcb2._atime;
+		pcb2._atime = atime;*/
+		swap(pcb1._atime,pcb2._atime);
+		swap(pcb1._name,pcb2._name);
+		swap(pcb1._runtime,pcb2._runtime);
+		swap(pcb1._start,pcb2._start);
+		swap(pcb1._finish,pcb2._finish);
+		swap(pcb1._statue,pcb2._statue);
+		swap(pcb1._cycling,pcb2._cycling);
+		swap(pcb1._wi,pcb2._wi);
+
+		//int name=pcb1._name;
+		//pcb1._name=pcb2._name;
+		//pcb2._name=name;
+	
+		//int runtime =pcb1._runtime;
+		//pcb1._runtime = pcb2._runtime;
+		//pcb2._runtime = runtime;
+
+		//int start = pcb1._start;
+		//pcb1._start = pcb2._start;
+		//pcb2._start = start;
+
+		//int finish = pcb1._finish;
+		//pcb1._finish = pcb2._finish;
+		//pcb2._finish = finish;
+
+		//Statue statue = pcb1._statue;
+		//pcb1._statue = pcb2._statue;
+		//pcb2._statue = statue;
+
+		//int cycling = pcb1._cycling;
+		//pcb1._cycling = pcb2._cycling;
+		//pcb2._cycling = cycling;
+
+		//int wi = pcb1._wi;
+		//pcb1._wi = pcb2._wi;
+		//pcb2._wi = wi;
+	}
+
+	void Sort(int amount)
+	{
+		int l,k;
+		int size = _f.size();
+		for(int i=0;i<size;i++) //按进程到达时间的先后排序
+		{                               //如果两个进程同时到达，按在屏幕先输入的先运行
+			for(int j=0;j<size-i-1;j++)
+			{ 
+				if(_f[j]._atime>_f[j+1]._atime)
+				{
+					int atime =_f[j]._atime;
+					_f[j]._atime=_f[j+1]._atime;
+					_f[j+1]._atime=atime;
+
+					int name=_f[j]._name;
+					_f[j]._name=_f[j+1]._name;
+					_f[j+1]._name=name;
+
+					int runtime =_f[j]._runtime;
+					_f[j]._runtime = _f[j+1]._runtime;
+					_f[j+1]._runtime = runtime;
+
+					int start = _f[j]._start;
+					_f[j]._start = _f[j+1]._start;
+					_f[j+1]._start = start;
+
+					int finish = _f[j]._finish;
+					_f[j]._finish = _f[j+1]._finish;
+					_f[j+1]._finish = finish;
+
+					Statue statue = _f[j]._statue;
+					_f[j]._statue = _f[j+1]._statue;
+					_f[j+1]._statue = statue;
+
+					int cycling = _f[j]._cycling;
+					_f[j]._cycling = _f[j+1]._cycling;
+					_f[j+1]._cycling = cycling;
+
+					int wi = _f[j]._wi;
+					_f[j]._wi = _f[j+1]._wi;
+					_f[j+1]._wi = wi;
+				}
+			}
+		}
+	}
+
 protected:
 	vector<Pcb> _f;
 };
@@ -275,5 +415,6 @@ void Test()
 {
 	JobScheduling fc;
 	//fc.FcFs();
-	fc.RoundRobin(2);
+	//fc.RoundRobin(2);
+	fc.SJF();
 }

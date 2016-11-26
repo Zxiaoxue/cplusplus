@@ -564,23 +564,56 @@ int _GetMaxDigit(int* a,int size)
 void LSDSort(int* a,int size)
 {
 	assert(a);
-	int* count = new int[size];
-	memset(count,0,sizeof(int)*size);
-	int num = 0;
-	int index = 0;
+	int* count = new int[10];
+	int* tmp = new int[size];
 
-	//统计每个桶中数据个数
-	for(int i = 0; i<size; ++i)
+	memset(tmp,0,sizeof(int)*size);
+
+	int digit = _GetMaxDigit(a,size);
+	int base = 1;
+	while(digit--)
 	{
-		num = a[i]%10;
-		count[num]++;
+		int num = 0;
+		int index = 0;
+		memset(count,0,sizeof(int)*10);//排完一次相应下标的索引就要把count数组清空，否则累加会出错
+
+		//统计每个桶中数据个数,建立索引数组
+		for(int i = 0; i<size; ++i)
+		{
+			num = (a[i]/base)%10;
+			count[num]++;
+		}
+
+		//调整count数组，使count数组保存的是各个下标所对应的值的起始位置(索引位置)
+		for(int i = 1; i<10; ++i)
+		{
+			count[i] += count[i-1];
+		}
+
+		//将每一次排序的结果放入tmp数组中
+		for(int i = size-1; i>=0; --i)
+		{
+			index = (a[i]/base)%10;
+			int j = --count[index];
+			tmp[j] = a[i];
+		}
+
+		//将值拷回a数组
+		for(int i = 0; i<size; ++i)
+		{
+			a[i] = tmp[i];
+		}
+
+		base *= 10;//控制位数，从个位开始到十位百位
 	}
+
 }
 
 void TestLSDSort()
 {
 	//int a[] = {2,5,4,9,3,6,8,7,1,0};
-	int a[] = {2,0,4,92,3,6,8,711,1,5};
+	//int a[] = {2,0,41,92,3,6,8,711,1,5};
+	int a[] = {81,22,73,93,43,14,55,65,28,39};
 	int size = sizeof(a)/sizeof(a[0]);
 
 	LSDSort(a,size);

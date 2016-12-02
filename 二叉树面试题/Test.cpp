@@ -6,6 +6,10 @@ using namespace std;
 
 int main()
 {
+	//Test();
+	//TestToList();
+	//TestIsCompleteTree();
+	TestfatherNode();
 	system("pause");
 	return 0;
 }

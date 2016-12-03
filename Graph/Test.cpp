@@ -2,8 +2,9 @@
 
 int main()
 {
-	TestGraphMatrix();
-	TestGraphLink();
+	//TestGraphMatrix();
+	//TestGraphLink();
+	TestKruskal();
 	system("pause");
 	return 0;
 }

@@ -4,6 +4,9 @@
 using namespace std;
 #include <string>
 #include <cassert>
+#include "Heap.h"
+#include "UnionSet.h"
+
 
 template<class V,class W>
 class GraphMatrix
@@ -242,12 +245,76 @@ public:
 			cout<<_vertex[i];
 			while(cur)
 			{
-				cout<<"->"<<cur->_w<<cur->_dst;
+				cout<<"->"<<cur->_w<<" "<<cur->_dst;
 				cur = cur->_next;
 			}
 			cout<<"->NULL"<<endl;
 		}
 	}
+
+
+	//最小生成树
+	bool Kruskal(GraphLink<V,W>& graph)
+	{
+		if(_isDirection)
+			return false;
+
+		graph._vertex = _vertex;
+		graph._isDirection = _isDirection;
+		size_t size = _tables.size();
+		graph._tables.resize(size);
+
+		UnionSet us(size);
+
+		struct Compare
+		{
+			bool operator()(Node* l,Node* r)
+			{
+				return l->_w < r->_w;
+			}
+		};
+
+		//建一个小堆
+		Heap<Node*,Compare> minHeap;
+		for(size_t i = 0; i<size; ++i)
+		{
+			Node* cur = _tables[i];
+			while(cur)
+			{
+				minHeap.Push(cur);
+				cur = cur->_next;
+			}
+		}
+
+		int n = 0;
+
+		while(n<size-1)
+		{
+			if(minHeap.Empty())
+				return false;
+
+			Node* top = minHeap.Top();
+			minHeap.Pop();
+			size_t root1 = us.GetRoot(top->_src);
+            size_t root2 = us.GetRoot(top->_dst);
+
+			if(root1 != root2)
+			{
+				graph.AddEdg(top->_src,top->_dst,top->_w);
+				us.Union(top->_src,top->_dst);
+				n++;
+			}
+
+		}
+
+		return true;
+	}
+
+	//最小生成树---Prim算法
+	/*bool Prim(GraphLink<V,W>& graph)
+	{
+
+	}*/
 
 protected:
 	vector<V> _vertex;	//顶点数组
@@ -255,20 +322,40 @@ protected:
 	vector<Node*> _tables;	//邻接表
 };
 
-void TestGraphLink()
+//void TestGraphLink()
+//{
+//	string vertex[6] = {"西安","咸阳","宝鸡","渭南","延安","汉中"};
+//
+//	GraphLink<string,int> gl(vertex,6);
+//
+//	gl.AddEdg("西安","宝鸡",300);
+//	gl.AddEdg("西安","咸阳",100);
+//	gl.AddEdg("西安","渭南",200);
+//	gl.AddEdg("宝鸡","延安",300);
+//	gl.AddEdg("渭南","宝鸡",200);
+//
+//	gl.Print();
+//
+//	gl.DFS("西安");
+//	gl.BFS("西安");
+//}
+
+
+void TestKruskal()
 {
-	string vertex[6] = {"西安","咸阳","宝鸡","渭南","延安","汉中"};
-
-	GraphLink<string,int> gl(vertex,6);
-
-	gl.AddEdg("西安","宝鸡",300);
-	gl.AddEdg("西安","咸阳",100);
-	gl.AddEdg("西安","渭南",200);
-	gl.AddEdg("宝鸡","延安",300);
-	gl.AddEdg("渭南","宝鸡",200);
+	int vertex[] = {0,1,2,3,4};
+	GraphLink<int,int> gl(vertex,5);
+	gl.AddEdg(0,3,10);
+	gl.AddEdg(0,4,20);
+	gl.AddEdg(1,2,10);
+	gl.AddEdg(1,3,20);
+	gl.AddEdg(1,4,30);
+	gl.AddEdg(2,4,40);
 
 	gl.Print();
 
-	gl.DFS("西安");
-	gl.BFS("西安");
+	cout<<gl.Kruskal(gl)<<endl;
+	GraphLink<int,int> g2(vertex,5);
+	cout<<gl.Kruskal(g2)<<endl;
+	g2.Print();
 }

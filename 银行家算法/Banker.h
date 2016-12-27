@@ -9,18 +9,24 @@ class Banker
 public:
 	void Meun()
 	{
-		printf("请输入进程数:\n");
+		cout<<"请输入进程数:"<<endl;
 		cin>>course;
-		printf("请输入资源种类数:\n");
+		cout<<"请输入资源种类数:"<<endl;
 		cin>>resource;
 
-		printf("请输入最大需求矩阵(Max):\n");
+		cout<<"请输入最大需求矩阵(Max):"<<endl;
 		for(int i = 0; i<course; ++i)
 		{
 			for(int j = 0; j<resource; ++j)
 			{
 				cin>>Max[i][j];
+				if(Max[i][j] < 0)
+				{
+					cout<<"最大需求矩阵数据错误!!"<<endl;
+					return;
+				}
 			}
+
 		}
 		
 		printf("请输入已分配矩阵(Allocation):\n");
@@ -30,13 +36,23 @@ public:
 			for(int j = 0; j<resource; ++j)
 			{
 				cin>>Allocation[i][j];
+				if(Allocation[i][j] < 0)
+				{
+					cout<<"已分配矩阵数据错误!!"<<endl;
+					return;
+				}
 			}
 		}
 
-		printf("请输入资源可用矩阵(Avaliable):\n");
+		cout<<"请输入资源可用矩阵(Avaliable):"<<endl;
 		for(int i = 0; i<resource; ++i)
 		{
 			cin>>Avaliable[i];
+			if(Avaliable[i] < 0)
+			{
+				cout<<"资源可用矩阵数据错误!"<<endl;
+				return;
+			}
 		}
 
 		//计算需求矩阵
@@ -50,14 +66,13 @@ public:
 
 		Print();
 		Check();//检查该状态是否为安全状态，输出安全序列
-
 		Alloc();
 	}
 
 	void Print()
 	{
-		cout<<"*****************************资源分配表**************************"<<endl;
-		cout<<"进程号**********Max************Allocation************Avaliable***"<<endl;
+		cout<<"***********************************资源分配表***********************************"<<endl;
+		cout<<"进程号            Max                 Allocation                   Need           "<<endl;
 		for(int i = 0; i<course; ++i)
 		{
 			cout<<i<<"		";
@@ -81,10 +96,10 @@ public:
 		cout<<"系统可用资源(Avaliable):"<<endl;
 		for(int i = 0; i<resource; ++i)
 		{
-			cout<<Avaliable[i]<<endl;
+			cout<<Avaliable[i]<<" ";
 		}
 
-		cout<<"*****************************************************************"<<endl;
+		cout<<endl<<"******************************************************************************"<<endl;
 	}
 
 	bool IsSalf(int* work,bool* finish,int& index)
@@ -96,12 +111,12 @@ public:
 				int flag = 1;
 				for(int j = 0; j<resource; ++j)
 				{
-					if(Need[i][j] > work[j])//需求大于可用，不可以分配
+					if(Need[i][j] > work[j])//需求大于可用，不可以分配,直接跳出循环
 					{
 						flag = 0;
+						break;
 					}
 				}
-
 				if(flag == 1)
 				{
 					index = i;
@@ -124,6 +139,8 @@ public:
 		int salf = 0;
 		int num = course;
 
+		//效率低
+		//-----------------------------------------------------------------------
 		//while(num--)
 		//{
 		//	for(int i = 0; i<course; ++i)
@@ -146,25 +163,29 @@ public:
 
 		//		}
 		//	}
-		//}
+		//}----------------------------------------------------------------------------
 
 		int index = 0;
 		while(IsSalf(work,finish,index) == true)
 		{
 			for(int j = 0; j<resource; ++j)
-			{
-				work[j] += Allocation[index][j];
-			}		
+				work[j] += Allocation[index][j];		
 			
 			finish[index] = true;
 			a[salf++] = index;
+
 			//打印计算过程
-			cout<<"找到进程:"<<index<<endl;
-			cout<<"需要资源:";
+			cout<<"找到进程:"<<index<<"	"<<"需要资源:";
 			for(int i = 0; i<resource; ++i)
 			{
 				cout<<Need[index][i]<<" ";
 			}
+			cout<<"系统可用:";
+			for(int i = 0; i<resource; ++i)
+			{
+				cout<<work[i]<<" ";
+			}
+			cout<<endl;
 		}
 
 		int flag = 1;
@@ -187,11 +208,9 @@ public:
 		}
 		else
 		{
-			Print();
 			cout<<"该状态不安全!"<<endl;
 			return false;
 		}
-		
 	}
 
 	void Alloc()
@@ -199,26 +218,22 @@ public:
 		int AllocationT[m][m];
 		int AvaliableT[m];
 		int NeedT[m][m];
-
-		//初始化三个矩阵的数据
-		for(int i = 0; i<course; ++i)
-		{
-			for(int j = 0; j<resource; ++j)
-			{
-				AllocationT[i][j] = Allocation[i][j];
-				NeedT[i][j] = Need[i][j];
-			}
-		}
-
-		for(int i = 0; i<resource; ++i)
-		{
-			AvaliableT[i] = Avaliable[i];
-		}
-
 		char c;
 		cout<<"是否还需要请求资源: Y or N"<<endl;
 		while(cin>>c)
 		{
+
+			//初始化三个矩阵的数据，给所有进程的0号资源赋值，1号资源赋值-----修改
+			for(int j = 0; j<resource; ++j)
+			{
+				for(int i = 0; i<course; ++i)
+				{
+					AllocationT[j][i] = Allocation[j][i];
+					NeedT[j][i] = Need[j][i];
+				}
+				AvaliableT[j] = Avaliable[j];
+			}
+
 			int requst[m];//请求资源矩阵
 			int cou = 0;
 			int res = 0;
@@ -241,7 +256,21 @@ public:
 			{
 				cin>>requst[i];
 			}
-
+			//判断请求资源数是否小于系统可用，如果不小于，那就直接打印，不可用
+			int x = 0;
+			for(int i = 0; i<resource; ++i)
+			{
+				if(requst[i]>Avaliable[i])
+				{
+					x = 1;
+					break;
+				}
+			}
+			if(x == 1)
+			{
+				cout<<" "<<endl;
+				continue;
+			}
 			//修改三个矩阵的数据
 			for(int i = 0; i<resource; ++i)
 			{
@@ -252,21 +281,21 @@ public:
 
 			if(Check() == false)//不是安全状态，将数据改回来
 			{
-				for(int i = 0; i<course; ++i)
+				//三个矩阵的数据，给所有进程的0号资源赋值，1号资源赋值-----修改
+				for(int j = 0; j<resource; ++j)
 				{
-					for(int j = 0; j<resource; ++j)
+					for(int i = 0; i<course; ++i)
 					{
-						Allocation[i][j] = AllocationT[i][j];
-						Need[i][j] = NeedT[i][j];
+						Allocation[j][i] = AllocationT[j][i];
+						Need[j][i] = NeedT[j][i];
 					}
+					Avaliable[j] = AvaliableT[j];
 				}
 
-				for(int i = 0; i<resource; ++i)
-				{
-					Avaliable[i] = AvaliableT[i];
-				}
 			}
-
+			//如果是安全状态，打印，如果不是，恢复到原来状态
+			Print();
+			cout<<"是否还需要请求资源: Y or N"<<endl;
 		}
 	}
 
